@@ -1,0 +1,76 @@
+security:
+    # https://symfony.com/doc/current/security/experimental_authenticators.html
+    enable_authenticator_manager: true
+    encoders:
+        App\Entity\User:
+            algorithm: auto
+    # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
+    providers:
+        # used to reload user from session & other features (e.g. switch_user)
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        admin_area:
+            pattern: ^/admin
+            provider: app_user_provider
+            entry_point: App\Security\AppAdminAuthenticator
+            form_login:
+                check_path: app_admin_login_check
+                login_path: app_admin_login
+                remember_me: true
+            logout:
+                path: app_admin_logout
+            guard:
+                authenticators:
+                    - App\Security\AppAdminAuthenticator
+        user_area:
+            pattern: ^/profile
+            provider: app_user_provider
+            entry_point: App\Security\AppWebAuthenticator
+            form_login:
+                check_path: app_web_login_check
+                login_path: app_web_login
+                remember_me: true
+            logout:
+                path: app_web_logout
+            guard:
+                authenticators:
+                    - App\Security\AppWebAuthenticator
+        api_docs:
+            pattern: ^/api/?$
+            provider: app_user_provider            
+            anonymous: false
+            http_basic: ~
+        api_area:
+            pattern: ^/api
+            provider: app_user_provider
+            entry_point: lexik_jwt_authentication.jwt_token_authenticator
+            stateless: true
+            http_basic: ~
+            guard:
+                authenticators:
+                    - lexik_jwt_authentication.jwt_token_authenticator
+        main:
+            lazy: true
+            provider: app_user_provider
+    
+            # activate different ways to authenticate
+            # https://symfony.com/doc/current/security.html#firewalls-authentication
+
+            # https://symfony.com/doc/current/security/impersonating_user.html
+            # switch_user: true
+
+    # Easy way to control access for large sections of your site
+    # Note: Only the *first* access control that matches will be used
+    access_control:
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api, roles: ROLE_USER }
+        - { path: ^/profile/login, roles: PUBLIC_ACCESS }
+        - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/admin/login, roles: PUBLIC_ACCESS }
+        - { path: ^/admin, roles: ROLE_ADMIN }
